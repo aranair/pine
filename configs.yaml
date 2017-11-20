@@ -1,0 +1,9 @@
+coins:
+  - name: "bitcoin"
+    cost: 1000
+    units: 5
+  - name: "ethereum"
+    cost: 100
+    units: 1
+misc:
+  foo: "bar"
