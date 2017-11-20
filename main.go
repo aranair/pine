@@ -21,7 +21,6 @@ var headers = []string{
 
 func main() {
   c := config.LoadConfiguration("./configs.yaml")
-  fmt.Println(c)
 
   err := ui.Init()
   if err != nil {
