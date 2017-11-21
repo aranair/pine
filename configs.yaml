@@ -1,8 +1,8 @@
 coins:
-  - name: "bitcoin"
+  - ticker: "bitcoin"
     cost: 1000
     units: 5
-  - name: "ethereum"
+  - ticker: "ethereum"
     cost: 100
     units: 1
 misc:
