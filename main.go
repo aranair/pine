@@ -5,6 +5,9 @@ import (
 
   ui "github.com/gizak/termui"
   "fmt"
+  "net/http"
+  "os"
+  "io/ioutil"
 
   // "encoding/json"
   // "fsnotify"
@@ -19,9 +22,25 @@ var headers = []string{
   "% Change (24h)",
 }
 
-func main() {
-  c := config.LoadConfiguration("./configs.yaml")
+func makeApiCall(tickers []string) {
+  res, err := http.Get("https://api.coinmarketcap.com/v1/ticker/")
+  if err != nil {
+    fmt.Printf("%s", err)
+    os.Exit(1)
+  } else {
+    defer res.Body.Close()
+    contents, err := ioutil.ReadAll(res.Body)
+    if err != nil {
+      fmt.Printf("%s", err)
+      os.Exit(1)
+    }
+    for i, v := range contents {
+      fmt.Printf("%s, %s", i, v)
+    }
+  }
+}
 
+func startUI() {
   err := ui.Init()
   if err != nil {
     panic(err)
@@ -62,4 +81,14 @@ func main() {
   })
 
   ui.Loop()
+}
+
+func main() {
+  c := config.LoadConfiguration("./configs.yaml")
+  fmt.Println(c)
+
+  coins := []string{"bitcoin"}
+  makeApiCall(coins)
+
+  // startUI()
 }

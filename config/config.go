@@ -3,6 +3,7 @@ package config
 import (
   "github.com/spf13/viper"
   "fmt"
+  "log"
 )
 
 type Config struct {
@@ -16,13 +17,11 @@ type coin struct {
 }
 
 func LoadConfiguration(file string) Config {
-  fmt.Println(".........")
   viper.SetConfigType("yaml")
   viper.SetConfigFile(file)
 
   if err := viper.ReadInConfig(); err != nil {
-    fmt.Println("2")
-    // log.Fatalf("Error reading config file, %s", err)
+    log.Fatalf("Error reading config file, %s", err)
   }
 
   fmt.Printf("Using config: %s\n", viper.ConfigFileUsed())
@@ -32,6 +31,7 @@ func LoadConfiguration(file string) Config {
   if err != nil {
     panic(err)
   }
+
   // viper.WatchConfig()
 
   // viper.OnConfigChange(func(e fsnotify.Event) {
