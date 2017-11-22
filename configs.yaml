@@ -5,5 +5,8 @@ coins:
   - ticker: "ethereum"
     cost: 100
     units: 1
+  - ticker: "bitcoin-cash"
+    cost: 100
+    units: 1
 misc:
   foo: "bar"

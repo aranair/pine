@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
+	"time"
 	// "os"
 
 	"encoding/json"
@@ -37,7 +39,6 @@ var headers = []string{
 	"Price in USD",
 	"Price in BTC",
 	"% Change (1h)",
-	"% Change (24h)",
 }
 
 func includes(coins []string, coin string) bool {
@@ -49,7 +50,7 @@ func includes(coins []string, coin string) bool {
 	return false
 }
 
-func getCoins(holdings []string) [][]string {
+func getCoins(holdings []string) ([]ui.Attribute, [][]string) {
 	rows := [][]string{headers}
 	res, err := http.Get("https://api.coinmarketcap.com/v1/ticker")
 	if err != nil {
@@ -67,6 +68,8 @@ func getCoins(holdings []string) [][]string {
 			panic(err)
 		}
 
+		colors := []ui.Attribute{ui.ColorWhite}
+
 		for _, coin := range ar {
 			if includes(holdings, coin.Id) {
 				rows = append(rows, []string{
@@ -75,24 +78,23 @@ func getCoins(holdings []string) [][]string {
 					coin.PriceUsd,
 					coin.PriceBtc,
 					coin.PercentChange1h + "%",
-					coin.PercentChange24h + "%",
 				})
+
+				f, _ := strconv.ParseFloat(coin.PercentChange1h, 64)
+				if f >= 0 {
+					colors = append(colors, ui.ColorGreen)
+				} else {
+					colors = append(colors, ui.ColorRed)
+				}
 			}
 		}
-		return rows
+		return colors, rows
 	}
 }
 
-func buildTable(rows [][]string) {
-	err := ui.Init()
-	if err != nil {
-		panic(err)
-	}
-	defer ui.Close()
-
-	tb := ui.NewTable()
+func assignRows(tb *ui.Table, rows [][]string, colors []ui.Attribute) {
 	tb.Rows = rows
-	tb.FgColor = ui.ColorWhite
+	tb.FgColors = colors
 	tb.BgColor = ui.ColorDefault
 	tb.Separator = true
 	tb.Analysis()
@@ -106,32 +108,52 @@ func buildTable(rows [][]string) {
 		ui.NewRow(ui.NewCol(12, 0)),
 		ui.NewRow(ui.NewCol(12, 0, tb)),
 	)
+}
 
+func main() {
+	// Grab list of coins to display
+	conf := config.LoadConfiguration("./configs.yaml")
+	fmt.Println(conf)
+	var tickers []string
+	for _, coin := range conf.Coins {
+		tickers = append(tickers, coin.Ticker)
+	}
+	colors, rows := getCoins(tickers)
+
+	// Render stuff
+	err := ui.Init()
+	if err != nil {
+		panic(err)
+	}
+	defer ui.Close()
+
+	tb := ui.NewTable()
+
+	assignRows(tb, rows, colors)
 	ui.Body.Align()
 	ui.Render(ui.Body)
 
+	// Press q to quit
 	ui.Handle("/sys/kbd/q", func(ui.Event) {
 		ui.StopLoop()
 	})
 
-	ui.Handle("/timer/5s", func(e ui.Event) {
+	// Press r to refresh
+	ui.Handle("/sys/kbd/r", func(ui.Event) {
+		colors, rows := getCoins(tickers)
+		assignRows(tb, rows, colors)
+		ui.Body.Align()
+		ui.Render(ui.Body)
+	})
+
+	// Endpoints only update every 5mins
+	ui.Merge("/timer/1m", ui.NewTimerCh(time.Second*60))
+	ui.Handle("/timer/1m", func(e ui.Event) {
+		colors, rows := getCoins(tickers)
+		assignRows(tb, rows, colors)
 		ui.Body.Align()
 		ui.Render(ui.Body)
 	})
 
 	ui.Loop()
-}
-
-func main() {
-	conf := config.LoadConfiguration("./configs.yaml")
-	fmt.Println(conf)
-
-	var tickers []string
-	for _, coin := range conf.Coins {
-		tickers = append(tickers, coin.Ticker)
-	}
-	fmt.Println(tickers)
-
-	rows := getCoins(tickers)
-	buildTable(rows)
 }
