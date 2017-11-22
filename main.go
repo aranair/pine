@@ -40,8 +40,18 @@ var headers = []string{
 	"% Change (24h)",
 }
 
-func getApiCoins(tickers []string) []ApiCoin {
-	res, err := http.Get("https://api.coinmarketcap.com/v1/ticker/bitcoin")
+func includes(coins []string, coin string) bool {
+	for _, n := range coins {
+		if n == coin {
+			return true
+		}
+	}
+	return false
+}
+
+func getCoins(holdings []string) [][]string {
+	rows := [][]string{headers}
+	res, err := http.Get("https://api.coinmarketcap.com/v1/ticker")
 	if err != nil {
 		panic(err)
 	} else {
@@ -57,47 +67,56 @@ func getApiCoins(tickers []string) []ApiCoin {
 			panic(err)
 		}
 
-		return ar
+		for _, coin := range ar {
+			if includes(holdings, coin.Id) {
+				rows = append(rows, []string{
+					coin.Name,
+					coin.Symbol,
+					coin.PriceUsd,
+					coin.PriceBtc,
+					coin.PercentChange1h + "%",
+					coin.PercentChange24h + "%",
+				})
+			}
+		}
+		return rows
 	}
 }
 
-func startUI() {
+func buildTable(rows [][]string) {
 	err := ui.Init()
 	if err != nil {
 		panic(err)
 	}
 	defer ui.Close()
 
-	rows := [][]string{
-		headers,
-	}
+	tb := ui.NewTable()
+	tb.Rows = rows
+	tb.FgColor = ui.ColorWhite
+	tb.BgColor = ui.ColorDefault
+	tb.Separator = true
+	tb.Analysis()
+	tb.SetSize()
+	tb.BorderFg = ui.ColorCyan
+	tb.Y = 50
+	tb.X = 0
+	tb.Height = 100
 
-	table1 := ui.NewTable()
-	table1.Rows = rows
-	table1.FgColor = ui.ColorWhite
-	table1.BgColor = ui.ColorDefault
-	table1.Separator = false
-	table1.Analysis()
-	table1.SetSize()
-	table1.Y = 0
-	table1.X = 0
-	table1.Height = 200
-
-	// build
 	ui.Body.AddRows(
-		ui.NewRow(ui.NewCol(12, 0, table1)),
+		ui.NewRow(ui.NewCol(12, 0)),
+		ui.NewRow(ui.NewCol(12, 0, tb)),
 	)
 
 	ui.Body.Align()
-
 	ui.Render(ui.Body)
 
 	ui.Handle("/sys/kbd/q", func(ui.Event) {
 		ui.StopLoop()
 	})
 
-	ui.Handle("/timer/1m", func(e ui.Event) {
-		// Refresh drawing
+	ui.Handle("/timer/5s", func(e ui.Event) {
+		ui.Body.Align()
+		ui.Render(ui.Body)
 	})
 
 	ui.Loop()
@@ -107,8 +126,7 @@ func main() {
 	c := config.LoadConfiguration("./configs.yaml")
 	fmt.Println(c)
 
-	coins := []string{"bitcoin"}
-	getApiCoins(coins)
-
-	// startUI()
+	holdings := []string{"bitcoin"}
+	rows := getCoins(holdings)
+	buildTable(rows)
 }
