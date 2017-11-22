@@ -123,10 +123,15 @@ func buildTable(rows [][]string) {
 }
 
 func main() {
-	c := config.LoadConfiguration("./configs.yaml")
-	fmt.Println(c)
+	conf := config.LoadConfiguration("./configs.yaml")
+	fmt.Println(conf)
 
-	holdings := []string{"bitcoin"}
-	rows := getCoins(holdings)
+	var tickers []string
+	for _, coin := range conf.Coins {
+		tickers = append(tickers, coin.Ticker)
+	}
+	fmt.Println(tickers)
+
+	rows := getCoins(tickers)
 	buildTable(rows)
 }
