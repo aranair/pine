@@ -1,8 +1,12 @@
 # Pine <a target="_blank" href="https://opensource.org/licenses/MIT" title="License: MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg"></a> <a target="_blank" href="http://makeapullrequest.com" title="PRs Welcome"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg"></a>
 
-Pine provides a way to track coin prices as well overall holding values, all in your console.
+Pine provides a way to not only track a list of coin prices, but also your portfolio values. All in your console!
 
 The data comes from [coinmarketcap.com](https://coinmarketcap.com/).
+
+## Screenshot
+
+![Demo](https://github.com/aranair/pine/blob/master/demo.png?raw=true "Demo")
 
 ## Install
 
@@ -13,6 +17,8 @@ go get -u github.com/aranair/pine
 ## Configuration
 
 - Update `configs.yaml` with the coins you want to track
+- If you want to track the `Gain`, `% Gain` and `Overall Profit`, fill in the Cost and Unit.
+- Currency is still WIP
 
 Sample:
 
@@ -27,6 +33,10 @@ coins:
   - ticker: "bitcoin-cash"
     cost: 100
     units: 1
+
+    # If no cost/units provided, it'll just track prices, with no portfolio tracking
+  - ticker: "neo"
+  - ticker: "ethereum-classic"
 ```
 
 ## Usage
@@ -34,7 +44,6 @@ coins:
 ```
 go run main.go
 ```
-
 
 ## License
 MIT

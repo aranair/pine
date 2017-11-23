@@ -3,16 +3,13 @@ package main
 import (
 	"./config"
 
+	"encoding/json"
 	"fmt"
+	ui "github.com/gizak/termui"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
-	// "os"
-
-	"encoding/json"
-	ui "github.com/gizak/termui"
-	// "fsnotify"
 )
 
 type ApiCoin struct {
@@ -79,10 +76,25 @@ func getCoins(holdings []config.Coin) ([]ui.Attribute, [][]string) {
 
 		for _, coin := range ar {
 			holding, included := findHolding(holdings, coin.Id)
+			var gain float64
+			var gs, gsp, gst string = "-", "-", "-"
 
 			if included {
 				priceUsdFloat, _ := strconv.ParseFloat(coin.PriceUsd, 64)
-				diff := priceUsdFloat - holding.Cost
+				if holding.Units > 0 {
+					gain = priceUsdFloat - holding.Cost
+					gs = fts(gain)
+					gsp = fts(gain/holding.Cost*100) + "%"
+					gst = fts(gain * holding.Units)
+
+					if gain >= 0 {
+						colors = append(colors, ui.ColorGreen)
+					} else {
+						colors = append(colors, ui.ColorRed)
+					}
+				} else {
+					colors = append(colors, ui.ColorWhite)
+				}
 
 				rows = append(rows, []string{
 					coin.Name,
@@ -90,16 +102,11 @@ func getCoins(holdings []config.Coin) ([]ui.Attribute, [][]string) {
 					coin.PriceUsd,
 					coin.PriceBtc,
 					coin.PercentChange1h + "%",
-					fts(diff),
-					fts(diff/holding.Cost*100) + "%",
-					fts(diff * holding.Units),
+					gs,
+					gsp,
+					gst,
 				})
 
-				if diff >= 0 {
-					colors = append(colors, ui.ColorGreen)
-				} else {
-					colors = append(colors, ui.ColorRed)
-				}
 			}
 		}
 		return colors, rows

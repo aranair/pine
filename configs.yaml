@@ -14,29 +14,13 @@ coins:
     cost: 100
     units: 1
   - ticker: "dash"
-    cost: 100
-    units: 1
   - ticker: "ripple"
-    cost: 100
-    units: 1
   - ticker: "monero"
-    cost: 100
-    units: 1
   - ticker: "neo"
-    cost: 100
-    units: 1
   - ticker: "iota"
-    cost: 100
-    units: 1
   - ticker: "nem"
-    cost: 100
-    units: 1
   - ticker: "qtum"
-    cost: 100
-    units: 1
   - ticker: "ethereum-classic"
-    cost: 100
-    units: 1
 misc:
   currency: "USD"
 
