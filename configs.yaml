@@ -1,4 +1,10 @@
 # Note: cost/units are WIP
+
+# Valid coin tickers:
+# https://coinmarketcap.com/coins/
+# Mouse over the links to find the ticker
+# E.g. https://coinmarketcap.com/currencies/bitcoin/
+
 coins:
   - ticker: "bitcoin"
     cost: 1000
@@ -7,6 +13,30 @@ coins:
     cost: 100
     units: 1
   - ticker: "bitcoin-cash"
+    cost: 100
+    units: 1
+  - ticker: "dash"
+    cost: 100
+    units: 1
+  - ticker: "ripple"
+    cost: 100
+    units: 1
+  - ticker: "monero"
+    cost: 100
+    units: 1
+  - ticker: "neo"
+    cost: 100
+    units: 1
+  - ticker: "iota"
+    cost: 100
+    units: 1
+  - ticker: "nem"
+    cost: 100
+    units: 1
+  - ticker: "qtum"
+    cost: 100
+    units: 1
+  - ticker: "ethereum-classic"
     cost: 100
     units: 1
 misc:

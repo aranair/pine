@@ -94,7 +94,7 @@ func getCoins(holdings []string) ([]ui.Attribute, [][]string) {
 
 func setTableDefaults(tb *ui.Table) {
 	tb.BgColor = ui.ColorDefault
-	tb.Separator = true
+	tb.Separator = false
 	tb.Analysis()
 	tb.SetSize()
 	tb.BorderFg = ui.ColorCyan
