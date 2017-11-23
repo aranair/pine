@@ -39,18 +39,25 @@ var headers = []string{
 	"Price in USD",
 	"Price in BTC",
 	"% Change (1h)",
+	"Gain",
+	"% Gain",
+	"Overall",
 }
 
-func includes(coins []string, coin string) bool {
-	for _, n := range coins {
-		if n == coin {
-			return true
+func findHolding(holdings []config.Coin, coin string) (config.Coin, bool) {
+	for _, h := range holdings {
+		if h.Ticker == coin {
+			return h, true
 		}
 	}
-	return false
+	return config.Coin{}, false
 }
 
-func getCoins(holdings []string) ([]ui.Attribute, [][]string) {
+func fts(f float64) string {
+	return strconv.FormatFloat(f, 'f', 2, 64)
+}
+
+func getCoins(holdings []config.Coin) ([]ui.Attribute, [][]string) {
 	rows := [][]string{headers}
 	res, err := http.Get("https://api.coinmarketcap.com/v1/ticker")
 	if err != nil {
@@ -71,17 +78,24 @@ func getCoins(holdings []string) ([]ui.Attribute, [][]string) {
 		colors := []ui.Attribute{ui.ColorWhite}
 
 		for _, coin := range ar {
-			if includes(holdings, coin.Id) {
+			holding, included := findHolding(holdings, coin.Id)
+
+			if included {
+				priceUsdFloat, _ := strconv.ParseFloat(coin.PriceUsd, 64)
+				diff := priceUsdFloat - holding.Cost
+
 				rows = append(rows, []string{
 					coin.Name,
 					coin.Symbol,
 					coin.PriceUsd,
 					coin.PriceBtc,
 					coin.PercentChange1h + "%",
+					fts(diff),
+					fts(diff/holding.Cost*100) + "%",
+					fts(diff * holding.Units),
 				})
 
-				f, _ := strconv.ParseFloat(coin.PercentChange1h, 64)
-				if f >= 0 {
+				if diff >= 0 {
 					colors = append(colors, ui.ColorGreen)
 				} else {
 					colors = append(colors, ui.ColorRed)
@@ -98,13 +112,13 @@ func setTableDefaults(tb *ui.Table) {
 	tb.Analysis()
 	tb.SetSize()
 	tb.BorderFg = ui.ColorCyan
-	tb.Y = 50
+	tb.Y = 0
 	tb.X = 0
-	tb.Height = 100
+	tb.Height = 30
 }
 
 func refresh(tb *ui.Table) {
-	colors, rows := getCoins(tickers)
+	colors, rows := getCoins(conf.Coins)
 	tb.Rows = rows
 	tb.FgColors = colors
 
@@ -113,15 +127,15 @@ func refresh(tb *ui.Table) {
 	ui.Render(ui.Body)
 }
 
-var tickers []string
+var conf config.Config
 
 func main() {
 	// Grab list of coins to display
-	conf := config.LoadConfiguration("./configs.yaml")
+	conf = config.LoadConfiguration("./configs.yaml")
 	fmt.Println(conf)
-	for _, coin := range conf.Coins {
-		tickers = append(tickers, coin.Ticker)
-	}
+	// for _, coin := range conf.Coins {
+	// 	tickers = append(tickers, coin.Ticker)
+	// }
 
 	// Render stuff
 	err := ui.Init()
@@ -133,7 +147,9 @@ func main() {
 	tb := ui.NewTable()
 
 	setTableDefaults(tb)
-	ui.Body.AddRows(ui.NewRow(ui.NewCol(12, 0, tb)))
+	ui.Body.AddRows(
+		ui.NewRow(ui.NewCol(12, 0, tb)),
+	)
 	refresh(tb)
 
 	// Press q to quit

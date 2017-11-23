@@ -7,10 +7,10 @@ import (
 )
 
 type Config struct {
-	Coins []coin
+	Coins []Coin
 }
 
-type coin struct {
+type Coin struct {
 	Ticker string
 	Cost   float64
 	Units  float64
