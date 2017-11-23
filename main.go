@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"time"
+	// "time"
 	// "os"
 
 	"encoding/json"
@@ -93,8 +93,6 @@ func getCoins(holdings []string) ([]ui.Attribute, [][]string) {
 }
 
 func assignRows(tb *ui.Table, rows [][]string, colors []ui.Attribute) {
-	tb.Rows = rows
-	tb.FgColors = colors
 	tb.BgColor = ui.ColorDefault
 	tb.Separator = true
 	tb.Analysis()
@@ -103,22 +101,27 @@ func assignRows(tb *ui.Table, rows [][]string, colors []ui.Attribute) {
 	tb.Y = 50
 	tb.X = 0
 	tb.Height = 100
-
-	ui.Body.AddRows(
-		ui.NewRow(ui.NewCol(12, 0)),
-		ui.NewRow(ui.NewCol(12, 0, tb)),
-	)
 }
+
+func refresh(tb *ui.Table) {
+	colors, rows := getCoins([]string{"bitcoin"})
+	tb.Rows = rows
+	tb.FgColors = colors
+
+	ui.Clear()
+	ui.Body.Align()
+	ui.Render(ui.Body)
+}
+
+var tickers []string
 
 func main() {
 	// Grab list of coins to display
 	conf := config.LoadConfiguration("./configs.yaml")
 	fmt.Println(conf)
-	var tickers []string
 	for _, coin := range conf.Coins {
 		tickers = append(tickers, coin.Ticker)
 	}
-	colors, rows := getCoins(tickers)
 
 	// Render stuff
 	err := ui.Init()
@@ -130,8 +133,9 @@ func main() {
 	tb := ui.NewTable()
 
 	assignRows(tb, rows, colors)
-	ui.Body.Align()
-	ui.Render(ui.Body)
+
+	ui.Body.AddRows(ui.NewRow(ui.NewCol(12, 0, tb)))
+	refresh(tb)
 
 	// Press q to quit
 	ui.Handle("/sys/kbd/q", func(ui.Event) {
@@ -140,19 +144,13 @@ func main() {
 
 	// Press r to refresh
 	ui.Handle("/sys/kbd/r", func(ui.Event) {
-		colors, rows := getCoins(tickers)
-		assignRows(tb, rows, colors)
-		ui.Body.Align()
-		ui.Render(ui.Body)
+		refresh(tb)
 	})
 
 	// Endpoints only update every 5mins
 	ui.Merge("/timer/1m", ui.NewTimerCh(time.Second*60))
 	ui.Handle("/timer/1m", func(e ui.Event) {
-		colors, rows := getCoins(tickers)
-		assignRows(tb, rows, colors)
-		ui.Body.Align()
-		ui.Render(ui.Body)
+		refresh(tb)
 	})
 
 	ui.Loop()
