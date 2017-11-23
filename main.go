@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	// "time"
+	"time"
 	// "os"
 
 	"encoding/json"
@@ -92,7 +92,7 @@ func getCoins(holdings []string) ([]ui.Attribute, [][]string) {
 	}
 }
 
-func assignRows(tb *ui.Table, rows [][]string, colors []ui.Attribute) {
+func setTableDefaults(tb *ui.Table) {
 	tb.BgColor = ui.ColorDefault
 	tb.Separator = true
 	tb.Analysis()
@@ -104,7 +104,7 @@ func assignRows(tb *ui.Table, rows [][]string, colors []ui.Attribute) {
 }
 
 func refresh(tb *ui.Table) {
-	colors, rows := getCoins([]string{"bitcoin"})
+	colors, rows := getCoins(tickers)
 	tb.Rows = rows
 	tb.FgColors = colors
 
@@ -132,8 +132,7 @@ func main() {
 
 	tb := ui.NewTable()
 
-	assignRows(tb, rows, colors)
-
+	setTableDefaults(tb)
 	ui.Body.AddRows(ui.NewRow(ui.NewCol(12, 0, tb)))
 	refresh(tb)
 
