@@ -140,9 +140,6 @@ func main() {
 	// Grab list of coins to display
 	conf = config.LoadConfiguration("./configs.yaml")
 	fmt.Println(conf)
-	// for _, coin := range conf.Coins {
-	// 	tickers = append(tickers, coin.Ticker)
-	// }
 
 	// Render stuff
 	err := ui.Init()
@@ -152,7 +149,6 @@ func main() {
 	defer ui.Close()
 
 	tb := ui.NewTable()
-
 	setTableDefaults(tb)
 	ui.Body.AddRows(
 		ui.NewRow(ui.NewCol(12, 0, tb)),

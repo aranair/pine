@@ -45,5 +45,7 @@ coins:
 go run main.go
 ```
 
+It automatically refreshes every minute, but if you want to refresh it manually, press r.
+
 ## License
 MIT
