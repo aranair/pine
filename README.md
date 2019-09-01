@@ -8,11 +8,12 @@ The data comes from [coinmarketcap.com](https://coinmarketcap.com/).
 
 ![Demo](https://github.com/aranair/pine/blob/master/demo.png?raw=true "Demo")
 
-## Install
+## Building from code
 
 ```
 go get -u github.com/aranair/pine
 dep ensure
+./scripts/build.sh
 ```
 
 ## Configuration
@@ -42,9 +43,16 @@ coins:
 
 ## Usage
 
+If you're on mac, just run the binary that I've built.
+
+```
+pine
+```
+
 ```
 go run main.go
 ```
+
 
 It automatically refreshes every minute, but if you want to refresh it manually, press r.
 
