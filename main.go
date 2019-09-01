@@ -1,15 +1,17 @@
 package main
 
 import (
-	"./config"
+	"github.com/aranair/pine/config"
 
 	"encoding/json"
 	"fmt"
-	ui "github.com/gizak/termui"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
+
+	ui "github.com/gizak/termui/v3"
+	"github.com/gizak/termui/v3/widgets"
 )
 
 type ApiCoin struct {
@@ -55,7 +57,7 @@ func fts(f float64) string {
 	return strconv.FormatFloat(f, 'f', 2, 64)
 }
 
-func getCoins(holdings []config.Coin) ([]ui.Attribute, [][]string) {
+func getCoins(holdings []config.Coin) (map[int]ui.Style, [][]string) {
 	rows := [][]string{headers}
 	res, err := http.Get("https://api.coinmarketcap.com/v1/ticker")
 	if err != nil {
@@ -73,9 +75,11 @@ func getCoins(holdings []config.Coin) ([]ui.Attribute, [][]string) {
 			panic(err)
 		}
 
-		colors := []ui.Attribute{ui.ColorWhite}
+		colors := map[int]ui.Style{
+			0: ui.NewStyle(ui.ColorWhite),
+		}
 
-		for _, coin := range ar {
+		for i, coin := range ar {
 			holding, included := findHolding(holdings, coin.Id)
 			var gain float64
 			var gs, gsp, gst string = "-", "-", "-"
@@ -89,12 +93,12 @@ func getCoins(holdings []config.Coin) ([]ui.Attribute, [][]string) {
 					gst = fts(gain * holding.Units)
 
 					if gain >= 0 {
-						colors = append(colors, ui.ColorGreen)
+						colors[i+1] = ui.NewStyle(ui.ColorGreen)
 					} else {
-						colors = append(colors, ui.ColorRed)
+						colors[i+1] = ui.NewStyle(ui.ColorRed)
 					}
 				} else {
-					colors = append(colors, ui.ColorWhite)
+					colors[i+1] = ui.NewStyle(ui.ColorWhite)
 				}
 
 				rows = append(rows, []string{
@@ -115,25 +119,23 @@ func getCoins(holdings []config.Coin) ([]ui.Attribute, [][]string) {
 	}
 }
 
-func setTableDefaults(tb *ui.Table) {
-	tb.BgColor = ui.ColorDefault
-	tb.Separator = false
-	tb.Analysis()
-	tb.SetSize()
-	tb.BorderFg = ui.ColorCyan
-	tb.Y = 0
-	tb.X = 0
-	tb.Height = 30
+func setTableDefaults(tb *widgets.Table) {
+	tb.RowSeparator = true
 }
 
-func refresh(tb *ui.Table) {
+func refresh(tb *widgets.Table) {
 	colors, rows := getCoins(conf.Coins)
 	tb.Rows = rows
-	tb.FgColors = colors
+
+	tb.TextStyle = ui.NewStyle(ui.ColorWhite)
+	tb.RowSeparator = true
+	tb.BorderStyle = ui.NewStyle(ui.ColorWhite)
+	tb.SetRect(0, 0, 150, 50)
+	tb.FillRow = true
+	tb.RowStyles = colors
 
 	ui.Clear()
-	ui.Body.Align()
-	ui.Render(ui.Body)
+	ui.Render(tb)
 }
 
 var conf config.Config
@@ -150,28 +152,23 @@ func main() {
 	}
 	defer ui.Close()
 
-	tb := ui.NewTable()
+	tb := widgets.NewTable()
 	setTableDefaults(tb)
-	ui.Body.AddRows(
-		ui.NewRow(ui.NewCol(12, 0, tb)),
-	)
 	refresh(tb)
 
-	// Press q to quit
-	ui.Handle("/sys/kbd/q", func(ui.Event) {
-		ui.StopLoop()
-	})
-
-	// Press r to refresh
-	ui.Handle("/sys/kbd/r", func(ui.Event) {
-		refresh(tb)
-	})
-
-	// Endpoints only update every 5mins
-	ui.Merge("/timer/1m", ui.NewTimerCh(time.Second*60))
-	ui.Handle("/timer/1m", func(e ui.Event) {
-		refresh(tb)
-	})
-
-	ui.Loop()
+	uiEvents := ui.PollEvents()
+	ticker := time.NewTicker(time.Second * 5).C
+	for {
+		select {
+		case e := <-uiEvents:
+			switch e.ID {
+			case "q", "<C-c>":
+				return
+			case "r":
+				refresh(tb)
+			}
+		case <-ticker:
+			refresh(tb)
+		}
+	}
 }

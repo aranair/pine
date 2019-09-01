@@ -12,6 +12,7 @@ The data comes from [coinmarketcap.com](https://coinmarketcap.com/).
 
 ```
 go get -u github.com/aranair/pine
+dep ensure
 ```
 
 ## Configuration
